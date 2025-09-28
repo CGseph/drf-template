@@ -1,0 +1,22 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Auth Service Debug",
+            "type": "debugpy",
+            "request": "attach",
+            "connect": {
+                "host": "localhost",
+                "port": 5678
+            },
+            "pathMappings": [
+                {
+                    "localRoot": "${workspaceFolder}/auth-service/src",
+                    "remoteRoot": "/app/src"
+                }
+            ],
+            "justMyCode": false,
+            "django": true
+        }
+    ]
+}

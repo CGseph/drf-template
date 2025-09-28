@@ -1,0 +1,5 @@
+{
+    "makefile.configureOnOpen": true,
+    "python.defaultInterpreterPath": "/usr/local/bin/python",
+    "python.terminal.activateEnvironment": false
+}

@@ -1,0 +1,61 @@
+# docker-compose.yml
+
+services:
+
+  auth-service:
+    build:
+      context: ./auth-service
+      dockerfile: DockerFile
+      target: development
+    ports:
+      - 8000:8000
+      - 5678:5678
+    environment:
+      - DJANGO_SECRET_KEY=dev-secret-key
+      - DJANGO_DEBUG=1
+      - DJANGO_SETTINGS_MODULE=config.settings.development
+      - PYDEVD_DISABLE_FILE_VALIDATION=1
+    volumes:
+      - ./auth-service/src:/app/src
+    networks:
+      - auth_network
+    depends_on:
+      - auth-db
+      - auth-redis
+  auth-db:
+    image: postgres:15
+    ports:
+      - 5432:5432
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    networks:
+      - auth_network
+
+  auth-redis:
+    image: redis:latest
+    ports:
+      - 6379:6379
+    volumes:
+      - redis_data:/data
+      - ./infra/redis/redis.conf:/usr/local/etc/redis/redis.conf:ro
+    networks:
+      - auth_network
+    command: ["redis-server", "/usr/local/etc/redis/redis.conf"]
+
+networks:
+  auth_network:
+    driver: bridge
+
+volumes:
+  db_data:
+  redis_data:
