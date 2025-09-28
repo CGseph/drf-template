@@ -1,0 +1,58 @@
+# ==============================
+#   Building stage
+# ==============================
+
+FROM python:3.12-slim AS builder
+
+WORKDIR /app
+
+RUN pip install poetry
+
+COPY pyproject.toml poetry.lock* ./
+
+COPY src/ ./src/
+
+RUN poetry config virtualenvs.create false
+
+# ==================================
+#   Development stage
+# ==================================
+
+FROM builder AS development
+
+WORKDIR /app
+
+RUN poetry install  --no-interaction --no-ansi --no-root
+
+COPY config/development ./config
+
+EXPOSE 8000 5678
+
+CMD ["python", "-m", "debugpy", "--listen", "0.0.0.0:5678", "src/manage.py", "runserver", "0.0.0.0:8000"]
+
+# ==================================
+#   Production stage
+# ==================================
+
+FROM builder AS production
+
+WORKDIR /app
+
+COPY config/production ./config
+
+RUN poetry install --no-dev
+
+RUN pip install gunicorn
+
+RUN groupadd -r authservice && useradd -r -g authservice authservice
+
+RUN chown -R authservice:authservice /app
+
+USER authservice
+
+EXPOSE 8080
+
+# Enviroment
+ENV DJANGO_SETTINGS_MODULE=config.settings.production
+
+CMD ["cd", "src/", "&&", "gunicorn", "src/config.asgi:application", "--bind", "0.0.0.0:8080"]
